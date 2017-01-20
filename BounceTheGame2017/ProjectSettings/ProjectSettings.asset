@@ -453,6 +453,7 @@ PlayerSettings:
   XboxOnePersistentLocalStorageSize: 0
   vrEditorSettings: {}
   cloudServicesEnabled:
+    Collab: 1
     UNet: 1
   cloudProjectId: f957bcf2-0634-41fc-aedb-96292e657b41
   projectName: BounceTheGame2017
