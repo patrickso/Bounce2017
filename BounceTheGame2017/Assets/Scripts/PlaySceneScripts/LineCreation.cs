@@ -10,6 +10,7 @@ public class LineCreation : MonoBehaviour {
 	Vector3 startPos;
 	bool clicked = false;
 	public Camera camera;
+	public Rigidbody2D workingLine;
 
 
 	Vector3 GetTouchCoordinates(){
@@ -19,28 +20,13 @@ public class LineCreation : MonoBehaviour {
 	}
 
 	bool IsTouchDown(){
-		return Input.GetMouseButtonDown (0);
+		return Input.GetMouseButton (0);
 	}
-	/*
+
 	void DrawLine(Vector3 start, Vector3 end)
 	{
-		GameObject myLine = new GameObject();
-		myLine.transform.position = start;
-		myLine.AddComponent<LineRenderer>();
-		LineRenderer lr = myLine.GetComponent<LineRenderer>();
-		lr.material = new Material(Shader.Find("Standard"));
-		lr.material.color = Color.black;
-		lr.SetColors(Color.black, Color.black);
-		lr.SetWidth(0.5f, 0.5f);
-		lr.SetPosition(0, start);
-		lr.SetPosition(1, end);
-	}
-	*/
-	void DrawLine(Vector3 start, Vector3 end)
-	{
-		// Perhaps GameObject Cannot be casted as a LineRenderer
-		Rigidbody2D lineClone = (Rigidbody2D) Instantiate(line, transform.position, transform.rotation);
-		LineRenderer renderer = lineClone.GetComponent<LineRenderer> ();
+		workingLine = (Rigidbody2D) Instantiate(line, transform.position, transform.rotation);
+		LineRenderer renderer = workingLine.GetComponent<LineRenderer> ();
 
 		var positions = new Vector3[2];
 		positions [0] = start;
@@ -49,6 +35,16 @@ public class LineCreation : MonoBehaviour {
 
 		
 	}
+
+	void UpdateWorkingLine(Vector3 start, Vector3 end){
+		LineRenderer renderer = workingLine.GetComponent<LineRenderer> ();
+
+		var positions = new Vector3[2];
+		positions [0] = start;
+		positions [1] = end;
+		renderer.SetPositions (positions);
+	}
+
 	// Update is called once per frame
 	void LateUpdate () {
 		Vector3 pos = GetTouchCoordinates ();
@@ -63,11 +59,18 @@ public class LineCreation : MonoBehaviour {
 			if (clicked) {
 				Debug.Log ("Drawing line");
 				//DrawLine (new Vector3 (0, 0), pos);
-				DrawLine (startPos, pos);
+				UpdateWorkingLine(startPos, pos);
+
 			} else {
 				startPos = pos;
+				clicked = true;
+				DrawLine (startPos, pos);
 			}
-			clicked = !clicked;
+
+		} else {
+			if (clicked) {
+				clicked = false;
+			}
 		}
 	}
 
