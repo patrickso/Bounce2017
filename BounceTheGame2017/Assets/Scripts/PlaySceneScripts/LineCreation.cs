@@ -27,22 +27,48 @@ public class LineCreation : MonoBehaviour {
 	{
 		workingLine = (Rigidbody2D) Instantiate(line, transform.position, transform.rotation);
 		LineRenderer renderer = workingLine.GetComponent<LineRenderer> ();
-
 		var positions = new Vector3[2];
 		positions [0] = start;
 		positions [1] = end;
+
+
 		renderer.SetPositions (positions);
 
 		
 	}
 
+	void FinalizeWorkingLine(){
+		LineRenderer renderer = workingLine.GetComponent<LineRenderer> ();
+		PolygonCollider2D collider = workingLine.GetComponent<PolygonCollider2D> ();
+
+		collider.isTrigger = false;
+		renderer.startColor = Color.black;
+		renderer.endColor = Color.black;
+	}
+
 	void UpdateWorkingLine(Vector3 start, Vector3 end){
 		LineRenderer renderer = workingLine.GetComponent<LineRenderer> ();
+		PolygonCollider2D collider = workingLine.GetComponent<PolygonCollider2D> ();
 
 		var positions = new Vector3[2];
 		positions [0] = start;
 		positions [1] = end;
 		renderer.SetPositions (positions);
+		var colliderPoints = new Vector2[4];
+
+		float slope = (float)(end.y - start.y) / (end.x - start.x);
+		float b = start.y - (slope * start.x);
+		float theta = Mathf.Atan (slope);
+		float phi = (float)(.5 * 3.14159) - theta;
+		float dx = (float).75 * Mathf.Cos (phi);
+		float dy = (float).75 * Mathf.Sin (phi);
+
+
+		colliderPoints [0] = new Vector2 (start.x + dx, start.y - dy);
+		colliderPoints [1] = new Vector2 (start.x - dx, start.y + dy);
+		colliderPoints [2] = new Vector2 (end.x -dx, end.y +dy);
+		colliderPoints [3] = new Vector2 (end.x +dx, end.y -dy);
+		collider.SetPath (0, colliderPoints);
 	}
 
 	// Update is called once per frame
@@ -57,8 +83,6 @@ public class LineCreation : MonoBehaviour {
 		mouse_down.text = "MouseDown: " + IsTouchDown ();
 		if (IsTouchDown ()) {
 			if (clicked) {
-				Debug.Log ("Drawing line");
-				//DrawLine (new Vector3 (0, 0), pos);
 				UpdateWorkingLine(startPos, pos);
 
 			} else {
@@ -69,6 +93,7 @@ public class LineCreation : MonoBehaviour {
 
 		} else {
 			if (clicked) {
+				FinalizeWorkingLine ();
 				clicked = false;
 			}
 		}
