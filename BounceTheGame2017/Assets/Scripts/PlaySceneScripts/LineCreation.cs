@@ -10,7 +10,7 @@ public class LineCreation : MonoBehaviour {
 	Vector3 startPos;
 	bool clicked = false;
 	public Camera camera;
-	public Rigidbody2D workingLine;
+	Rigidbody2D workingLine;
 
 
 	Vector3 GetTouchCoordinates(){
@@ -27,38 +27,66 @@ public class LineCreation : MonoBehaviour {
 	{
 		workingLine = (Rigidbody2D) Instantiate(line, transform.position, transform.rotation);
 		LineRenderer renderer = workingLine.GetComponent<LineRenderer> ();
-
 		var positions = new Vector3[2];
 		positions [0] = start;
 		positions [1] = end;
+
+
 		renderer.SetPositions (positions);
 
 		
 	}
 
+	void FinalizeWorkingLine(){
+		LineRenderer renderer = workingLine.GetComponent<LineRenderer> ();
+		PolygonCollider2D collider = workingLine.GetComponent<PolygonCollider2D> ();
+		collider.isTrigger = false;
+
+		PhysicsMaterial2D bounceMaterial = new PhysicsMaterial2D ();
+
+		var start = renderer.GetPosition (0);
+		var end = renderer.GetPosition (1);
+		Debug.Log ((end - start).magnitude);
+		float length = ((end - start).magnitude) / Utils.PixelsToUnits(Screen.width);
+		Debug.Log (length);
+		bounceMaterial.bounciness = (float) (3.0 * Mathf.Exp((float) -2.2 * length));
+		Debug.Log (bounceMaterial.bounciness);
+		collider.sharedMaterial = bounceMaterial;
+
+		renderer.startColor = Color.black;
+		renderer.endColor = Color.black;
+	}
+
 	void UpdateWorkingLine(Vector3 start, Vector3 end){
 		LineRenderer renderer = workingLine.GetComponent<LineRenderer> ();
+		PolygonCollider2D collider = workingLine.GetComponent<PolygonCollider2D> ();
 
 		var positions = new Vector3[2];
 		positions [0] = start;
 		positions [1] = end;
 		renderer.SetPositions (positions);
+		var colliderPoints = new Vector2[4];
+
+		float slope = (float)(end.y - start.y) / (end.x - start.x);
+		float b = start.y - (slope * start.x);
+		float theta = Mathf.Atan (slope);
+		float phi = (float)(.5 * 3.14159) - theta;
+		float dx = (float).75 * Mathf.Cos (phi);
+		float dy = (float).75 * Mathf.Sin (phi);
+
+
+		colliderPoints [0] = new Vector2 (start.x + dx, start.y - dy);
+		colliderPoints [1] = new Vector2 (start.x - dx, start.y + dy);
+		colliderPoints [2] = new Vector2 (end.x -dx, end.y +dy);
+		colliderPoints [3] = new Vector2 (end.x +dx, end.y -dy);
+		collider.SetPath (0, colliderPoints);
 	}
 
 	// Update is called once per frame
 	void LateUpdate () {
 		Vector3 pos = GetTouchCoordinates ();
-
-		Text xcoor_text = GameObject.Find("X-Coor").GetComponent<Text> ();
-		xcoor_text.text = "X-coor: " + pos.x;
-		Text ycoor_text = GameObject.Find("Y-Coor").GetComponent<Text> ();
-		ycoor_text.text = "Y-coor: " + pos.y;
-		Text mouse_down = GameObject.Find ("MouseDown").GetComponent<Text> ();
-		mouse_down.text = "MouseDown: " + IsTouchDown ();
 		if (IsTouchDown ()) {
 			if (clicked) {
-				Debug.Log ("Drawing line");
-				//DrawLine (new Vector3 (0, 0), pos);
 				UpdateWorkingLine(startPos, pos);
 
 			} else {
@@ -69,6 +97,7 @@ public class LineCreation : MonoBehaviour {
 
 		} else {
 			if (clicked) {
+				FinalizeWorkingLine ();
 				clicked = false;
 			}
 		}
